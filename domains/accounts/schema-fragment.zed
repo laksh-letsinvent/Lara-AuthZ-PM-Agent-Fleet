@@ -1,0 +1,143 @@
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// DOMAIN: ACCOUNTS — SpiceDB schema fragment
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//
+// owner:        Accounts SME (in v1: Laksh, solo)
+// last_updated: 2026-04-29
+// version:      v1
+//
+// EXPORTS (referenced by other domain fragments):
+//   - definition account
+//   - account#holder
+//   - account#viewer
+//   - account#writer_base
+//   - account#can_view
+//   - account#can_view_documents
+//   - account#can_view_payments
+//   - account#can_transact
+//   - account#can_manage_payees
+//   - account#can_cancel_scheduled
+//   - account#can_freeze
+//   - account#can_modify_limits
+//   - account#can_approve_payment
+//   - account#can_contact_bank
+//   - account#can_complete_kyc
+//   - account#can_update_profile
+//   - account#delegate_view_pay
+//   - account#attorney
+//   - account#ops_agent
+//
+// DEPENDENCIES:
+//   - definition user (shared)
+//   - definition flag (shared, for state overrides)
+//   - caveat poa_scope (shared)
+//   - caveat delegation_window (shared)
+//   - caveat ops_consent (shared)
+//
+// Shared definitions and caveats live in this fragment because Accounts is the
+// anchor domain. Other fragments reference them but do not redeclare them.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+// ── SHARED DEFINITIONS ──────────────────────────────────────────
+
+definition user {}
+
+// Flag type for account states (frozen, suspended, bereavement, etc.)
+definition flag {}
+
+
+// ── SHARED CAVEATS ──────────────────────────────────────────────
+
+// PoA scope — checked at permission-check time.
+// The LPA instrument defines which actions are in scope.
+// The calling service passes the action being attempted; entitlements
+// checks whether it's in the attorney's allowed_actions list.
+caveat poa_scope(action: string, allowed_actions: list<string>) {
+    action in allowed_actions
+}
+
+// Delegation validity window — auto-expires delegates.
+caveat delegation_window(
+    request_time: timestamp,
+    valid_from: timestamp,
+    valid_until: timestamp
+) {
+    request_time >= valid_from && request_time <= valid_until
+}
+
+// Ops consent — ops agent can only act with explicit customer consent
+// or a compliance/fraud trigger.
+caveat ops_consent(has_consent: bool) {
+    has_consent == true
+}
+
+
+// ── ACCOUNT DEFINITION ──────────────────────────────────────────
+
+definition account {
+
+    // Ownership
+    relation owner: user
+    relation holder: user
+
+    // Delegation tiers (additive)
+    relation delegate_view_talk: user | user with delegation_window
+    relation delegate_view_pay: user | user with delegation_window
+    relation attorney: user with poa_scope | user with poa_scope with delegation_window
+
+    // Operational
+    relation ops_agent: user with ops_consent
+
+    // State control — blocks all write operations when set.
+    // Values: frozen, suspended, investigated, bereavement, dormant, former.
+    relation blocked: flag
+
+
+    // ── Subject group helpers ──────────────────────────────────
+
+    // Anyone with any level of access (read floor)
+    permission viewer = holder
+                      + delegate_view_talk
+                      + delegate_view_pay
+                      + attorney
+                      + ops_agent
+
+    // Anyone who can perform write actions (pre-state-check)
+    permission writer_base = holder
+                           + delegate_view_pay
+                           + attorney
+                           + ops_agent
+
+    // Is this account in a blocked state?
+    permission is_blocked = blocked
+
+
+    // ── Read permissions (not gated by state) ──────────────────
+
+    permission can_view           = viewer
+    permission can_view_documents = viewer
+    permission can_view_payments  = viewer
+    permission can_contact_bank   = viewer
+    permission can_configure_notifications = viewer
+
+
+    // ── Write permissions (gated by state) ─────────────────────
+
+    permission can_transact          = writer_base - is_blocked
+    permission can_manage_payees     = (holder + attorney + ops_agent) - is_blocked
+    permission can_cancel_scheduled  = (holder + delegate_view_pay + attorney + ops_agent) - is_blocked
+    permission can_freeze            = (holder + attorney + ops_agent) - is_blocked
+    permission can_delegate          = holder - is_blocked
+    permission can_manage_holders    = holder - is_blocked
+    permission can_close             = holder - is_blocked
+    permission can_open_account      = holder - is_blocked
+    permission can_modify_limits     = (holder + attorney) - is_blocked
+    permission can_approve_payment   = (holder + attorney) - is_blocked
+
+
+    // ── Servicing permissions ──────────────────────────────────
+
+    permission can_complete_kyc = (delegate_view_pay + attorney + ops_agent) - is_blocked
+    permission can_update_profile = attorney - is_blocked
+}

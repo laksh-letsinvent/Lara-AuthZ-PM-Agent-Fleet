@@ -1,0 +1,121 @@
+site_name: AuthZ Pipeline
+site_description: Fine-Grained Authorization — Entitlements Platform
+docs_dir: docs
+site_dir: site
+
+# ── Repo (update these when pushed to GitHub) ────────────────────────────────
+# repo_url: https://github.com/your-org/lara-authz-agent-fleet
+# repo_name: lara-authz-agent-fleet
+# edit_uri: edit/main/
+
+# ── Theme ─────────────────────────────────────────────────────────────────────
+theme:
+  name: material
+  custom_dir: overrides
+  palette:
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.action.edit
+  icon:
+    repo: fontawesome/brands/github
+
+# ── Custom colours (Monzo coral) ─────────────────────────────────────────────
+extra_css:
+  - stylesheets/extra.css
+
+# ── Plugins ───────────────────────────────────────────────────────────────────
+plugins:
+  - search:
+      lang: en
+
+# ── Markdown extensions ───────────────────────────────────────────────────────
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+
+# ── Navigation ────────────────────────────────────────────────────────────────
+nav:
+  - Home: index.md
+  - Pipeline: pipeline.md
+
+  - Knowledge Base:
+    - Overview: knowledge-base/README.md
+    - Delegation Use Cases: knowledge-base/delegation-use-cases.md
+    - Zanzibar & SpiceDB: knowledge-base/zanzibar-spicedb-reference.md
+    - Schema Design Patterns: knowledge-base/schema-design-patterns.md
+    - SpiceDB API Reference: knowledge-base/spicedb-api-reference.md
+    - Banking Domain Context: knowledge-base/banking-domain-context.md
+
+  - Domains:
+    - Accounts:
+      - Overview: domains/accounts/README.md
+      - AC Corpus: domains/accounts/ac-corpus.md
+      - Regulatory Anchors: domains/accounts/regulatory-anchors.md
+    - Payments:
+      - Overview: domains/payments/README.md
+    - Cards:
+      - Overview: domains/cards/README.md
+    - Communications:
+      - Overview: domains/communications/README.md
+    - Customer Management:
+      - Overview: domains/customer-mgmt/README.md
+
+  - Runs:
+    - Overview: runs/README.md
+    - Joint Account Baseline:
+      - Run Card: runs/2026-05-joint-account/00-run-card.md
+      - PRD: runs/2026-05-joint-account/01-prd.md
+      - AC: runs/2026-05-joint-account/02-ac.md
+      - Scenarios: runs/2026-05-joint-account/03-scenarios.md
+      - Schema Handoff: runs/2026-05-joint-account/04-schema-handoff.md
+    # ── Add new runs here when opened ──
+    # - My New Run:
+    #   - Run Card: runs/YYYY-MM-name/00-run-card.md
+
+  - Schema:
+    - Permission Matrix: schema/permission-matrix.md
+
+  - Framework:
+    - Skills: skills/README.md
+    - Specialists: specialists/README.md
+    - Forms: forms/README.md
+    - Style Guide: style/README.md
+    - Inbox: inbox/README.md
